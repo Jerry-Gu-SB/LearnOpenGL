@@ -1,4 +1,4 @@
-﻿Repository to track through my readings of LearnOpenGL
+﻿Repository to track through my readings of [LearnOpenGL](https://learnopengl.com/)
 
 
 ### Installation

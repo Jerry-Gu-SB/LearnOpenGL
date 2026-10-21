@@ -1,5 +1,5 @@
 ﻿cmake_minimum_required(VERSION 3.20)
-project(OpenGLLearning CXX)
+project(OpenGLLearning C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -12,8 +12,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 
 # 3. Add glad.c to the executable so it compiles alongside main.cpp
 add_executable(OpenGLLearning
-        main.cpp
         glad.c
+        main.cpp
 )
 
 # 4. Link the required libraries (we use the standard dl library for GLAD loader mechanics)

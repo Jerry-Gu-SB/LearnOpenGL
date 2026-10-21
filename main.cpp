@@ -2,9 +2,41 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+// SHADER:
+
+static auto vertexShaderSourceCode = "#version 330 core\n"
+    "layout (location = 0) in vec3 aPos;\n"
+    "void main () \n"
+    "{\n"
+    " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+    "}\0";
 
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+static void checkShaderCompilationSuccess(const unsigned int vertexShaderID) {
+    int success;
+    char infoLog[512];
+
+    glGetShaderiv(vertexShaderID, GL_COMPILE_STATUS, &success);
+
+    if (!success) {
+        glGetShaderInfoLog(vertexShaderID, 512, nullptr, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+}
+
+static void processInput(GLFWwindow * window) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        glClearColor(0.2f, 0.3f, .9f, 1.0f);
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        glClearColor(0.9f, 0.3f, .1f, 1.0f);
+    }
 }
 
 int main()
@@ -31,7 +63,41 @@ int main()
         std::cout << "Failed to inialize GLAD" << std::endl;
     }
 
+    // so we're setting the callback function and passing in the window object we've made
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+
+    // VARIABLES WE GOTTA DEFINE AND STUFF
+    const float verticies[] = {
+        -0.5f, -0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        0.0f, 0.5f, 0.0f,
+    };
+
+    unsigned int vertexBufferObject;
+    glGenBuffers(1, &vertexBufferObject);
+
+    unsigned int vertexShader;
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
+
+    while (!glfwWindowShouldClose(window)) {
+        processInput(window);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
+
+        // arg 1 is the number of strings we're passing in as source code.
+        glShaderSource(vertexShader, 1, &vertexShaderSourceCode, NULL);
+        glCompileShader(vertexShader);
+        checkShaderCompilationSuccess(vertexShader);
+
+
+        glClear(GL_COLOR_BUFFER_BIT);
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+
+    glfwTerminate();
     return 0;
 }
+

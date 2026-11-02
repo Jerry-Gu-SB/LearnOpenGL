@@ -86,11 +86,22 @@ int main()
 
     // VARIABLES WE GOTTA DEFINE AND STUFF
     const float verticies[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f, 0.5f, 0.0f,
+         0.5f,  0.5f, 0.0f,   // top right
+         0.5f, -0.5f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f, // bottom left
+        -0.5f,  0.5f, 0.0f    // top left
     };
 
+    const int indices[] = {
+        0, 1, 3,
+        1, 2, 3,
+    };
+
+    // index data of the indices above
+    unsigned int elementBufferObject;
+    glGenBuffers(1, &elementBufferObject);
+
+    // This is the actual data storage object of raw, unstructured, numbers
     unsigned int vertexBufferObject;
     glGenBuffers(1, &vertexBufferObject);
 
@@ -100,11 +111,19 @@ int main()
     unsigned int fragmentShader;
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
-    unsigned int VAO;
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
+    // VAO stores the GPU/driver state config
+    unsigned int vertexArrayObject;
+    glGenVertexArrays(1, &vertexArrayObject);
+
+    // Configure Vertex Array Object
+    glBindVertexArray(vertexArrayObject); // Bind the VAO to say "this is what we're touching"
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);  // Bind the actual data we're about to touch
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);  // load vertices
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);  // Bind the indices object now
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);  // load indices
+
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -138,9 +157,11 @@ int main()
         glUseProgram(shaderProgram);
         //  ============================================================================
 
-        glBindVertexArray(VAO);
+
+        glBindVertexArray(vertexArrayObject);
         glClear(GL_COLOR_BUFFER_BIT);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
         glfwSwapBuffers(window);
         glfwPollEvents();
     }

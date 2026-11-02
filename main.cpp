@@ -18,6 +18,13 @@ static auto fragmentShaderSourceCode = "#version 330 core\n"
     " FragColor = vec4(1.0f, 0.1f, 0.3f, 0.5f);\n"
     "}\0";
 
+static auto fragmentShaderBLUESourceCode = "#version 330 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    " FragColor = vec4(0.25f, 0.25f, 0.9f, 0.5f);\n"
+    "}\0";
+
 static void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
@@ -108,15 +115,22 @@ int main()
 
     // index data of the indices above
     unsigned int elementBufferObject;
+    // Just generates an ID. index 0: the number of object NAMES to generate, index 2: where to store the ID
     glGenBuffers(1, &elementBufferObject);
 
     // This is the actual data storage object of raw, unstructured, numbers
     unsigned int vertexBufferObject;
     glGenBuffers(1, &vertexBufferObject);
 
+    unsigned int vertexBufferObject_2;
+    glGenBuffers(1, &vertexBufferObject_2);
+
     // VAO stores the GPU/driver state config
     unsigned int vertexArrayObject;
     glGenVertexArrays(1, &vertexArrayObject);
+
+    unsigned int vertexArrayObject_2;
+    glGenVertexArrays(1, &vertexArrayObject_2);
 
     // Configure Vertex Array Object
     glBindVertexArray(vertexArrayObject); // Bind the VAO to say "this is what we're touching"
@@ -127,6 +141,20 @@ int main()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);  // Bind the indices object now
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);  // load indices
 
+    // This is tells OpenGL how to interpret the vertex data that's bound in the VAO
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Configure second VAO
+    glBindVertexArray(vertexArrayObject_2); // Bind the VAO to say "this is what we're touching"
+
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject_2);  // Bind the actual data we're about to touch
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);  // load vertices
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);  // Bind the indices object now
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);  // load indices
+
+    // This is tells OpenGL how to interpret the vertex data that's bound in the VAO
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -137,6 +165,9 @@ int main()
     unsigned int fragmentShader;
     fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
+    unsigned int fragmentShaderBLUE;
+    fragmentShaderBLUE = glCreateShader(GL_FRAGMENT_SHADER);
+
     glShaderSource(vertexShader, 1, &vertexShaderSourceCode, NULL); // arg 1 is the number of strings we're passing in as source code.
     glCompileShader(vertexShader);
     checkShaderCompilationSuccess(vertexShader);
@@ -144,6 +175,10 @@ int main()
     glShaderSource(fragmentShader, 1, &fragmentShaderSourceCode, NULL);
     glCompileShader(fragmentShader);
     checkShaderCompilationSuccess(fragmentShader);
+
+    glShaderSource(fragmentShaderBLUE, 1, &fragmentShaderBLUESourceCode, NULL);
+    glCompileShader(fragmentShaderBLUE);
+    checkShaderCompilationSuccess(fragmentShaderBLUE);
 
     unsigned int shaderProgram;
     shaderProgram = glCreateProgram();
@@ -153,14 +188,29 @@ int main()
     glLinkProgram(shaderProgram);
     checkShaderLinkingSuccess(shaderProgram);
 
+    // blue shader program:
+    unsigned int blueShaderProgram;
+    blueShaderProgram = glCreateProgram();
+    glAttachShader(blueShaderProgram, vertexShader);
+    glAttachShader(blueShaderProgram, fragmentShaderBLUE);
+    glLinkProgram(blueShaderProgram);
+    checkShaderLinkingSuccess(blueShaderProgram);
+
+
     // RENDER LOOP ===========================================================================
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
+        glClear(GL_COLOR_BUFFER_BIT);
+
         glUseProgram(shaderProgram);
         glBindVertexArray(vertexArrayObject);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * 3));
+
+        glUseProgram(blueShaderProgram);
+        glBindVertexArray(vertexArrayObject_2);
+        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, (void*)0);
+
         glBindVertexArray(0);
 
         glfwSwapBuffers(window);

@@ -58,11 +58,16 @@ static void processInput(GLFWwindow * window) {
 
 int main()
 {
+
+    // SETUP ==========================================================================================
+
+
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
     // if OpenGL and GLFW were restaurant, OpenGL would be the kitchen and GLFW would be the building and outer exterior
     GLFWwindow* window = glfwCreateWindow(800, 600, "glfw window", nullptr, nullptr);
@@ -84,18 +89,22 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 
-    // VARIABLES WE GOTTA DEFINE AND STUFF
+    // VERTICES =========================================================================
     const float verticies[] = {
          0.5f,  0.5f, 0.0f,   // top right
          0.5f, -0.5f, 0.0f,  // bottom right
         -0.5f, -0.5f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f    // top left
+        -0.5f,  0.5f, 0.0f,    // top left
+         0.0f,  0.95f,0.0f  // top center point
     };
 
     const int indices[] = {
         0, 1, 3,
         1, 2, 3,
+        1, 2, 4
     };
+
+    // BUFFER OBJECTS ==================================================================
 
     // index data of the indices above
     unsigned int elementBufferObject;
@@ -104,12 +113,6 @@ int main()
     // This is the actual data storage object of raw, unstructured, numbers
     unsigned int vertexBufferObject;
     glGenBuffers(1, &vertexBufferObject);
-
-    unsigned int vertexShader;
-    vertexShader = glCreateShader(GL_VERTEX_SHADER);
-
-    unsigned int fragmentShader;
-    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 
     // VAO stores the GPU/driver state config
     unsigned int vertexArrayObject;
@@ -127,41 +130,39 @@ int main()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    // SHADERS ============================================================================
+    unsigned int vertexShader;
+    vertexShader = glCreateShader(GL_VERTEX_SHADER);
 
+    unsigned int fragmentShader;
+    fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vertexShader, 1, &vertexShaderSourceCode, NULL); // arg 1 is the number of strings we're passing in as source code.
+    glCompileShader(vertexShader);
+    checkShaderCompilationSuccess(vertexShader);
+
+    glShaderSource(fragmentShader, 1, &fragmentShaderSourceCode, NULL);
+    glCompileShader(fragmentShader);
+    checkShaderCompilationSuccess(fragmentShader);
+
+    unsigned int shaderProgram;
+    shaderProgram = glCreateProgram();
+
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+    checkShaderLinkingSuccess(shaderProgram);
+
+    // RENDER LOOP ===========================================================================
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
-
-
-        // SHADERS ============================================================================
-
-        // arg 1 is the number of strings we're passing in as source code.
-        glShaderSource(vertexShader, 1, &vertexShaderSourceCode, NULL);
-        glCompileShader(vertexShader);
-        checkShaderCompilationSuccess(vertexShader);
-
-        glShaderSource(fragmentShader, 1, &fragmentShaderSourceCode, NULL);
-        glCompileShader(fragmentShader);
-        checkShaderCompilationSuccess(fragmentShader);
-
-        unsigned int shaderProgram;
-        shaderProgram = glCreateProgram();
-
-        glAttachShader(shaderProgram, vertexShader);
-        glAttachShader(shaderProgram, fragmentShader);
-        glLinkProgram(shaderProgram);
-        checkShaderLinkingSuccess(shaderProgram);
-
         glUseProgram(shaderProgram);
-        //  ============================================================================
-
-
         glBindVertexArray(vertexArrayObject);
         glClear(GL_COLOR_BUFFER_BIT);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 9, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
